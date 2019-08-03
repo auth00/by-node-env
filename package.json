@@ -65,13 +65,16 @@
     "which-pm-runs": "^1.0.0"
   },
   "devDependencies": {
+    "@babel/plugin-syntax-import-meta": "^7.2.0",
     "@types/commander-remaining-args": "^1.2.0",
     "@types/dotenv": "^6.1.1",
-    "@types/node": "^12.6.8",
+    "@types/node": "^12.6.9",
     "@types/nopt": "^3.0.29",
+    "@types/preferred-pm": "^2.0.0",
+    "@types/which-pm-runs": "^1.0.0",
     "cross-env": "^5.2.0",
     "husky": "^3.0.2",
-    "microbundle": "^0.11.0",
+    "microbundle": "^0.12.0-next.3",
     "npm-run-all": "^4.1.5",
     "prettier": "^1.18.2",
     "pretty-quick": "^1.11.1",

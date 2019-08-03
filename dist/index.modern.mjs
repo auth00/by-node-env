@@ -1,14 +1,10 @@
-'use strict';
-
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
-var fs = _interopDefault(require('fs'));
-var path = _interopDefault(require('path'));
-var dotenv = _interopDefault(require('dotenv'));
-var execa = _interopDefault(require('execa'));
-var preferredPM = _interopDefault(require('preferred-pm'));
-var readPkgUp = _interopDefault(require('read-pkg-up'));
-var whichPMRuns = _interopDefault(require('which-pm-runs'));
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+import execa from 'execa';
+import preferredPM from 'preferred-pm';
+import readPkgUp from 'read-pkg-up';
+import whichPMRuns from 'which-pm-runs';
 
 function _extends() {
   _extends = Object.assign || function (target) {
@@ -168,5 +164,5 @@ const byNodeEnv = function ({
   }
 };
 
-module.exports = byNodeEnv;
-//# sourceMappingURL=index.js.map
+export default byNodeEnv;
+//# sourceMappingURL=index.modern.mjs.map

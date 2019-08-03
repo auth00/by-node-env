@@ -1,77 +1,124 @@
-#!/usr/bin/env node
+import fs from 'fs';
+import path from 'path';
 
+import dotenv from 'dotenv';
 import execa from 'execa';
+import preferredPM from 'preferred-pm';
+import readPkgUp from 'read-pkg-up';
+import whichPMRuns from 'which-pm-runs';
 
-import {
-  getPreferredPackageManager,
-  getRunningPackageManager,
-} from './package-manager';
-import { getProcessEnv } from './process-env';
-import { getProgram } from './program';
-import { getRemainingArgv } from './remaining-argv';
-import { getRunScript } from './run-script';
+const getNodeEnv = ({
+  cwd,
+  env,
+  envFile,
+}: {
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  envFile?: string;
+}) => {
+  if (env.NODE_ENV) {
+    return env.NODE_ENV;
+  }
 
-const byNodeEnv = ({
+  if (envFile) {
+    const envPath = path.isAbsolute(envFile)
+      ? path.resolve(envFile)
+      : path.resolve(cwd, envFile);
+    const envBuffer = fs.readFileSync(envPath);
+    const envConfig = dotenv.parse(envBuffer);
+    if (envConfig.NODE_ENV) {
+      return envConfig.NODE_ENV;
+    }
+  }
+
+  return 'development';
+};
+
+const getPackageManager = async ({
+  cwd,
+  env,
   packageManager,
-  processEnv,
+}: {
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  packageManager?: string;
+}) => {
+  if (packageManager) {
+    return packageManager;
+  }
+
+  if (env.npm_execpath) {
+    return env.npm_execpath;
+  }
+
+  const pm = whichPMRuns() || (await preferredPM(cwd));
+  if (pm) {
+    return pm.name;
+  }
+
+  const readResult = readPkgUp.sync({ cwd });
+  if (readResult) {
+    const packageJson = readResult.package;
+    if (packageJson.engines) {
+      const { node, ...engines } = packageJson.engines;
+      const packageManagers = Object.keys(engines).filter((engine) => engine);
+      if (packageManagers[0]) {
+        return packageManagers[0];
+      }
+    }
+  }
+
+  return 'npm';
+};
+
+const spawn = ({
+  cwd,
+  env,
+  nodeEnv,
+  packageManager,
   remainingArgv,
   runScript,
 }: {
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  nodeEnv: string;
   packageManager: string;
-  processEnv: ReturnType<typeof getProcessEnv>;
   remainingArgv: string[];
   runScript: string;
 }) => {
   const command = packageManager;
-  const args = ['run', `${runScript}:${processEnv.NODE_ENV}`, ...remainingArgv];
-  const options: execa.SyncOptions = { env: processEnv, stdio: 'inherit' };
+  const args = ['run', `${runScript}:${nodeEnv}`, ...remainingArgv];
+  const options: execa.SyncOptions = {
+    cwd,
+    env: { ...env, NODE_ENV: nodeEnv },
+    stdio: 'inherit',
+  };
 
   return execa(command, args, options);
 };
 
-if (require.main === module || !module.parent) {
-  const processArgv = process.argv;
-  const processCwd = process.cwd();
-  const processEnv = process.env;
-
-  const program = getProgram({ processArgv });
-  const { envFile, packageManager } = program;
-
-  byNodeEnv({
-    packageManager: getRunningPackageManager({ packageManager, processEnv }),
-    processEnv: getProcessEnv({ envFile, processCwd, processEnv }),
-    remainingArgv: getRemainingArgv({ program }),
-    runScript: getRunScript({ processEnv }),
-  })
-    .then((childProcessResult) => {
-      process.exitCode = childProcessResult.exitCode;
-    })
-    .catch((childProcessResult: execa.ExecaError) => {
-      process.exitCode = childProcessResult.exitCode;
-    });
-}
-
-export default ({
+const byNodeEnv = async ({
+  cwd = process.cwd(),
+  env = process.env,
   envFile,
   packageManager,
-  processCwd = process.cwd(),
-  processEnv = process.env,
-  remainingArgv,
-  runScript,
+  remainingArgv = [],
+  runScript = 'start',
 }: {
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
   envFile?: string;
   packageManager?: string;
-  processCwd?: string;
-  processEnv?: NodeJS.ProcessEnv;
   remainingArgv?: string[];
   runScript?: string;
 } = {}) =>
-  getPreferredPackageManager({ packageManager, processCwd, processEnv }).then(
-    (preferredPackageManager) =>
-      byNodeEnv({
-        packageManager: preferredPackageManager,
-        processEnv: getProcessEnv({ envFile, processCwd, processEnv }),
-        remainingArgv: getRemainingArgv({ remainingArgv }),
-        runScript: getRunScript({ processEnv, runScript }),
-      }),
-  );
+  spawn({
+    cwd,
+    env,
+    nodeEnv: getNodeEnv({ cwd, env, envFile }),
+    packageManager: await getPackageManager({ cwd, env, packageManager }),
+    remainingArgv,
+    runScript,
+  });
+
+export default byNodeEnv;

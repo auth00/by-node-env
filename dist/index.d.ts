@@ -1,13 +1,12 @@
-#!/usr/bin/env node
 /// <reference types="node" />
 import execa from 'execa';
-declare const _default: ({ envFile, packageManager, processCwd, processEnv, remainingArgv, runScript, }?: {
+declare const byNodeEnv: ({ cwd, env, envFile, packageManager, remainingArgv, runScript, }?: {
+    cwd?: string | undefined;
+    env?: NodeJS.ProcessEnv | undefined;
     envFile?: string | undefined;
     packageManager?: string | undefined;
-    processCwd?: string | undefined;
-    processEnv?: NodeJS.ProcessEnv | undefined;
     remainingArgv?: string[] | undefined;
     runScript?: string | undefined;
 }) => Promise<execa.ExecaReturnValue<string>>;
-export default _default;
+export default byNodeEnv;
 //# sourceMappingURL=index.d.ts.map

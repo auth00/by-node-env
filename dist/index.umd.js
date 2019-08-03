@@ -1,137 +1,63 @@
-#!/usr/bin/env node
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('execa'), require('preferred-pm'), require('which-pm-runs'), require('read-pkg-up'), require('fs'), require('path'), require('dotenv'), require('commander'), require('commander-remaining-args')) :
-  typeof define === 'function' && define.amd ? define(['execa', 'preferred-pm', 'which-pm-runs', 'read-pkg-up', 'fs', 'path', 'dotenv', 'commander', 'commander-remaining-args'], factory) :
-  (global.byNodeEnv = factory(global.execa,global.preferredPM,global.whichPMRuns,global.readPkgUp,global.fs,global.path,global.dotenv,global.commander,global.getUnknownArgs));
-}(this, (function (execa,preferredPM,whichPMRuns,readPkgUp,fs,path,dotenv,program,getUnknownArgs) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('fs'), require('path'), require('dotenv'), require('execa'), require('preferred-pm'), require('read-pkg-up'), require('which-pm-runs')) :
+  typeof define === 'function' && define.amd ? define(['fs', 'path', 'dotenv', 'execa', 'preferred-pm', 'read-pkg-up', 'which-pm-runs'], factory) :
+  (global = global || self, global.byNodeEnv = factory(global.fs, global.path, global.dotenv, global.execa, global.preferredPM, global.readPkgUp, global.whichPMRuns));
+}(this, function (fs, path, dotenv, execa, preferredPM, readPkgUp, whichPMRuns) { 'use strict';
 
-  execa = execa && execa.hasOwnProperty('default') ? execa['default'] : execa;
-  preferredPM = preferredPM && preferredPM.hasOwnProperty('default') ? preferredPM['default'] : preferredPM;
-  whichPMRuns = whichPMRuns && whichPMRuns.hasOwnProperty('default') ? whichPMRuns['default'] : whichPMRuns;
-  readPkgUp = readPkgUp && readPkgUp.hasOwnProperty('default') ? readPkgUp['default'] : readPkgUp;
   fs = fs && fs.hasOwnProperty('default') ? fs['default'] : fs;
   path = path && path.hasOwnProperty('default') ? path['default'] : path;
   dotenv = dotenv && dotenv.hasOwnProperty('default') ? dotenv['default'] : dotenv;
-  program = program && program.hasOwnProperty('default') ? program['default'] : program;
-  getUnknownArgs = getUnknownArgs && getUnknownArgs.hasOwnProperty('default') ? getUnknownArgs['default'] : getUnknownArgs;
+  execa = execa && execa.hasOwnProperty('default') ? execa['default'] : execa;
+  preferredPM = preferredPM && preferredPM.hasOwnProperty('default') ? preferredPM['default'] : preferredPM;
+  readPkgUp = readPkgUp && readPkgUp.hasOwnProperty('default') ? readPkgUp['default'] : readPkgUp;
+  whichPMRuns = whichPMRuns && whichPMRuns.hasOwnProperty('default') ? whichPMRuns['default'] : whichPMRuns;
 
-  var getPackageJson = function (ref) {
-    var processCwd = ref.processCwd;
+  function _extends() {
+    _extends = Object.assign || function (target) {
+      for (var i = 1; i < arguments.length; i++) {
+        var source = arguments[i];
 
-    var packageJson = readPkgUp.sync({
-      cwd: processCwd
-    });
-
-    if (packageJson) {
-      return packageJson.package;
-    }
-
-    return undefined;
-  };
-
-  function objectWithoutProperties (obj, exclude) { var target = {}; for (var k in obj) if (Object.prototype.hasOwnProperty.call(obj, k) && exclude.indexOf(k) === -1) target[k] = obj[k]; return target; }
-
-  var getPackageManagerFromPackageJson = function (ref) {
-    var processCwd = ref.processCwd;
-
-    var packageJson = getPackageJson({
-      processCwd: processCwd
-    });
-
-    if (packageJson && packageJson.engines) {
-      var ref$1 = packageJson.engines;
-      var rest = objectWithoutProperties( ref$1, ["node"] );
-      var engines = rest;
-      var packageManagers = Object.keys(engines).filter(function (packageManager) { return packageManager; });
-
-      if (packageManagers[0]) {
-        return packageManagers[0];
-      }
-    }
-
-    return undefined;
-  };
-
-  var getPackageManagerFromProcessEnv = function (ref) {
-    var processEnv = ref.processEnv;
-
-    if (processEnv.npm_execpath) {
-      return processEnv.npm_execpath;
-    }
-
-    var pm = whichPMRuns();
-
-    if (pm) {
-      return pm.name;
-    }
-
-    return undefined;
-  };
-
-  var getPreferredPackageManager = function (ref) {
-    var packageManager = ref.packageManager;
-    var processCwd = ref.processCwd;
-    var processEnv = ref.processEnv;
-
-    try {
-      if (packageManager) {
-        return Promise.resolve(packageManager);
-      }
-
-      var packageManagerFromProcessEnv = getPackageManagerFromProcessEnv({
-        processEnv: processEnv
-      });
-
-      if (packageManagerFromProcessEnv) {
-        return Promise.resolve(packageManagerFromProcessEnv);
-      }
-
-      return Promise.resolve(preferredPM(processCwd)).then(function (pm) {
-        if (pm) {
-          return pm.name;
+        for (var key in source) {
+          if (Object.prototype.hasOwnProperty.call(source, key)) {
+            target[key] = source[key];
+          }
         }
+      }
 
-        var packageManagerFromPackageJson = getPackageManagerFromPackageJson({
-          processCwd: processCwd
-        });
-        return packageManagerFromPackageJson ? packageManagerFromPackageJson : 'npm';
-      });
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  };
-  var getRunningPackageManager = function (ref) {
-    var packageManager = ref.packageManager;
-    var processEnv = ref.processEnv;
+      return target;
+    };
 
-    if (packageManager) {
-      return packageManager;
-    }
+    return _extends.apply(this, arguments);
+  }
 
-    var packageManagerFromProcessEnv = getPackageManagerFromProcessEnv({
-      processEnv: processEnv
-    });
+  function _objectWithoutPropertiesLoose(source, excluded) {
+    if (source == null) return {};
+    var target = {};
+    var sourceKeys = Object.keys(source);
+    var key, i;
 
-    if (packageManagerFromProcessEnv) {
-      return packageManagerFromProcessEnv;
+    for (i = 0; i < sourceKeys.length; i++) {
+      key = sourceKeys[i];
+      if (excluded.indexOf(key) >= 0) continue;
+      target[key] = source[key];
     }
 
-    return 'npm';
-  };
+    return target;
+  }
 
-  var getNodeEnv = function (ref) {
-    var envFile = ref.envFile;
-    var processCwd = ref.processCwd;
-    var processEnv = ref.processEnv;
-
-    if (processEnv.NODE_ENV) {
-      return processEnv.NODE_ENV;
+  const getNodeEnv = ({
+    cwd,
+    env,
+    envFile
+  }) => {
+    if (env.NODE_ENV) {
+      return env.NODE_ENV;
     }
 
     if (envFile) {
-      var envPath = path.isAbsolute(envFile) ? path.resolve(envFile) : path.resolve(processCwd, envFile);
-      var envBuffer = fs.readFileSync(envPath);
-      var envConfig = dotenv.parse(envBuffer);
+      const envPath = path.isAbsolute(envFile) ? path.resolve(envFile) : path.resolve(cwd, envFile);
+      const envBuffer = fs.readFileSync(envPath);
+      const envConfig = dotenv.parse(envBuffer);
 
       if (envConfig.NODE_ENV) {
         return envConfig.NODE_ENV;
@@ -141,148 +67,110 @@
     return 'development';
   };
 
-  var getProcessEnv = function (ref) {
-    var envFile = ref.envFile;
-    var processCwd = ref.processCwd;
-    var processEnv = ref.processEnv;
+  const getPackageManager = function ({
+    cwd,
+    env,
+    packageManager
+  }) {
+    try {
+      function _temp(pm) {
+        if (pm) {
+          return pm.name;
+        }
 
-    var nodeEnv = getNodeEnv({
-      envFile: envFile,
-      processCwd: processCwd,
-      processEnv: processEnv
-    });
-    return Object.assign({}, processEnv,
-      {NODE_ENV: nodeEnv});
-  };
+        const readResult = readPkgUp.sync({
+          cwd
+        });
 
-  var getProgram = function (ref) {
-    var processArgv = ref.processArgv;
+        if (readResult) {
+          const packageJson = readResult.package;
 
-    program.allowUnknownOption().option('-e, --env-file <path>', 'specify path to .env file').option('-p, --package-manager <pm>', 'specify package manager to run-script');
-    var packageJson = getPackageJson({
-      processCwd: __dirname
-    });
+          if (packageJson.engines) {
+            const _packageJson$engines = packageJson.engines,
+                  engines = _objectWithoutPropertiesLoose(_packageJson$engines, ["node"]);
 
-    if (packageJson) {
-      if (packageJson.description) {
-        program.description(packageJson.description);
+            const packageManagers = Object.keys(engines).filter(engine => engine);
+
+            if (packageManagers[0]) {
+              return packageManagers[0];
+            }
+          }
+        }
+
+        return 'npm';
       }
 
-      program.version(packageJson.version);
-    }
+      if (packageManager) {
+        return Promise.resolve(packageManager);
+      }
 
-    program.parse(processArgv);
-    return program;
+      if (env.npm_execpath) {
+        return Promise.resolve(env.npm_execpath);
+      }
+
+      const _whichPMRuns = whichPMRuns();
+
+      return Promise.resolve(_whichPMRuns ? _temp(_whichPMRuns) : Promise.resolve(preferredPM(cwd)).then(_temp));
+    } catch (e) {
+      return Promise.reject(e);
+    }
   };
 
-  var getRemainingArgv = function (ref) {
-    var program$$1 = ref.program;
-    var remainingArgv = ref.remainingArgv;
-
-    if (remainingArgv) {
-      return remainingArgv;
-    }
-
-    if (program$$1) {
-      return getUnknownArgs(program$$1);
-    }
-
-    return [];
-  };
-
-  var getRunScript = function (ref) {
-    var processEnv = ref.processEnv;
-    var runScript = ref.runScript;
-
-    if (runScript) {
-      return runScript;
-    }
-
-    if (processEnv.npm_lifecycle_event) {
-      return processEnv.npm_lifecycle_event;
-    }
-
-    return 'start';
-  };
-
-  var byNodeEnv = function (ref) {
-    var packageManager = ref.packageManager;
-    var processEnv = ref.processEnv;
-    var remainingArgv = ref.remainingArgv;
-    var runScript = ref.runScript;
-
-    var command = packageManager;
-    var args = ['run', (runScript + ":" + (processEnv.NODE_ENV)) ].concat( remainingArgv);
-    var options = {
-      env: processEnv,
+  const spawn = ({
+    cwd,
+    env,
+    nodeEnv,
+    packageManager,
+    remainingArgv,
+    runScript
+  }) => {
+    const command = packageManager;
+    const args = ['run', `${runScript}:${nodeEnv}`, ...remainingArgv];
+    const options = {
+      cwd,
+      env: _extends({}, env, {
+        NODE_ENV: nodeEnv
+      }),
       stdio: 'inherit'
     };
     return execa(command, args, options);
   };
 
-  if (require.main === module || !module.parent) {
-    var processArgv = process.argv;
-    var processCwd = process.cwd();
-    var processEnv = process.env;
-    var program$1 = getProgram({
-      processArgv: processArgv
-    });
-    var envFile = program$1.envFile;
-    var packageManager = program$1.packageManager;
-    byNodeEnv({
-      packageManager: getRunningPackageManager({
-        packageManager: packageManager,
-        processEnv: processEnv
-      }),
-      processEnv: getProcessEnv({
-        envFile: envFile,
-        processCwd: processCwd,
-        processEnv: processEnv
-      }),
-      remainingArgv: getRemainingArgv({
-        program: program$1
-      }),
-      runScript: getRunScript({
-        processEnv: processEnv
-      })
-    }).then(function (childProcessResult) {
-      process.exitCode = childProcessResult.exitCode;
-    }).catch(function (childProcessResult) {
-      process.exitCode = childProcessResult.exitCode;
-    });
-  }
+  const byNodeEnv = function ({
+    cwd = process.cwd(),
+    env = process.env,
+    envFile,
+    packageManager,
+    remainingArgv = [],
+    runScript = 'start'
+  } = {}) {
+    try {
+      const _getNodeEnv = getNodeEnv({
+        cwd,
+        env,
+        envFile
+      });
 
-  var index = (function (ref) {
-    if ( ref === void 0 ) ref = {};
-    var envFile = ref.envFile;
-    var packageManager = ref.packageManager;
-    var processCwd = ref.processCwd; if ( processCwd === void 0 ) processCwd = process.cwd();
-    var processEnv = ref.processEnv; if ( processEnv === void 0 ) processEnv = process.env;
-    var remainingArgv = ref.remainingArgv;
-    var runScript = ref.runScript;
+      return Promise.resolve(getPackageManager({
+        cwd,
+        env,
+        packageManager
+      })).then(function (_getPackageManager) {
+        return spawn({
+          cwd,
+          env,
+          nodeEnv: _getNodeEnv,
+          packageManager: _getPackageManager,
+          remainingArgv,
+          runScript
+        });
+      });
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  };
 
-    return getPreferredPackageManager({
-    packageManager: packageManager,
-    processCwd: processCwd,
-    processEnv: processEnv
-  }).then(function (preferredPackageManager) { return byNodeEnv({
-    packageManager: preferredPackageManager,
-    processEnv: getProcessEnv({
-      envFile: envFile,
-      processCwd: processCwd,
-      processEnv: processEnv
-    }),
-    remainingArgv: getRemainingArgv({
-      remainingArgv: remainingArgv
-    }),
-    runScript: getRunScript({
-      processEnv: processEnv,
-      runScript: runScript
-    })
-  }); });
-  });
+  return byNodeEnv;
 
-  return index;
-
-})));
+}));
 //# sourceMappingURL=index.umd.js.map
