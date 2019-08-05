@@ -1,4 +1,4 @@
-import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 
 import dotenv from 'dotenv';
@@ -7,7 +7,7 @@ import preferredPM from 'preferred-pm';
 import readPkgUp from 'read-pkg-up';
 import whichPMRuns from 'which-pm-runs';
 
-const getNodeEnv = ({
+const getNodeEnv = async ({
   cwd,
   env,
   envFile,
@@ -24,7 +24,7 @@ const getNodeEnv = ({
     const envPath = path.isAbsolute(envFile)
       ? path.resolve(envFile)
       : path.resolve(cwd, envFile);
-    const envBuffer = fs.readFileSync(envPath);
+    const envBuffer = await fsPromises.readFile(envPath);
     const envConfig = dotenv.parse(envBuffer);
     if (envConfig.NODE_ENV) {
       return envConfig.NODE_ENV;
@@ -56,7 +56,7 @@ const getPackageManager = async ({
     return pm.name;
   }
 
-  const readResult = readPkgUp.sync({ cwd });
+  const readResult = await readPkgUp({ cwd });
   if (readResult) {
     const packageJson = readResult.package;
     if (packageJson.engines) {
@@ -71,39 +71,13 @@ const getPackageManager = async ({
   return 'npm';
 };
 
-const spawn = ({
-  cwd,
-  env,
-  nodeEnv,
-  packageManager,
-  remainingArgv,
-  runScript,
-}: {
-  cwd: string;
-  env: NodeJS.ProcessEnv;
-  nodeEnv: string;
-  packageManager: string;
-  remainingArgv: string[];
-  runScript: string;
-}) => {
-  const command = packageManager;
-  const args = ['run', `${runScript}:${nodeEnv}`, ...remainingArgv];
-  const options: execa.SyncOptions = {
-    cwd,
-    env: { ...env, NODE_ENV: nodeEnv },
-    stdio: 'inherit',
-  };
-
-  return execa(command, args, options);
-};
-
 const byNodeEnv = async ({
   cwd = process.cwd(),
   env = process.env,
   envFile,
   packageManager,
   remainingArgv = [],
-  runScript = 'start',
+  runScript = env.npm_lifecycle_event || 'start',
 }: {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
@@ -111,14 +85,26 @@ const byNodeEnv = async ({
   packageManager?: string;
   remainingArgv?: string[];
   runScript?: string;
-} = {}) =>
-  spawn({
+} = {}) => {
+  const NODE_ENV = await getNodeEnv({ cwd, env, envFile });
+
+  const command = await getPackageManager({ cwd, env, packageManager });
+  const args = ['run', `${runScript}:${NODE_ENV}`, ...remainingArgv];
+  const options: execa.Options = {
     cwd,
-    env,
-    nodeEnv: getNodeEnv({ cwd, env, envFile }),
-    packageManager: await getPackageManager({ cwd, env, packageManager }),
-    remainingArgv,
-    runScript,
-  });
+    env: { ...env, NODE_ENV },
+    stdio: 'inherit',
+  };
+
+  const childProcessResult = await execa(command, args, options).catch(
+    (childProcessResult: execa.ExecaError) => {
+      process.exitCode = childProcessResult.exitCode;
+      throw childProcessResult;
+    },
+  );
+
+  process.exitCode = childProcessResult.exitCode;
+  return childProcessResult;
+};
 
 export default byNodeEnv;

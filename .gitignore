@@ -1,4 +1,6 @@
-/.rts2_cache_*
+/.rpt2_cache
+/coverage
 /dist/*
+!/dist/cli.*
 !/dist/index.*
 /node_modules
