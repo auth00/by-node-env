@@ -1,17 +1,13 @@
-#!/usr/bin/env node
 'use strict';
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var path = _interopDefault(require('path'));
-var url = _interopDefault(require('url'));
-var program = _interopDefault(require('commander'));
-var getRemainingArgs = _interopDefault(require('commander-remaining-args'));
-var readPkgUp = _interopDefault(require('read-pkg-up'));
 var fs = require('fs');
+var path = _interopDefault(require('path'));
 var dotenv = _interopDefault(require('dotenv'));
 var execa = _interopDefault(require('execa'));
 var preferredPM = _interopDefault(require('preferred-pm'));
+var readPkgUp = _interopDefault(require('read-pkg-up'));
 var whichPMRuns = _interopDefault(require('which-pm-runs'));
 
 const getNodeEnv = async ({ cwd, env, envFile, }) => {
@@ -71,25 +67,5 @@ const byNodeEnv = async ({ cwd = process.cwd(), env = process.env, envFile, pack
     return childProcessResult;
 };
 
-const cli = async () => {
-    const filename = url.fileURLToPath((typeof document === 'undefined' ? new (require('u' + 'rl').URL)('file:' + __filename).href : (document.currentScript && document.currentScript.src || new URL('cli.js', document.baseURI).href)));
-    const dirname = path.dirname(filename);
-    const readResult = await readPkgUp({ cwd: dirname });
-    if (readResult) {
-        const packageJson = readResult.package;
-        if (packageJson.description) {
-            program.description(packageJson.description);
-        }
-        program.version(packageJson.version);
-    }
-    program
-        .allowUnknownOption()
-        .option('-e, --env-file <path>', 'specify path to .env file')
-        .option('-p, --package-manager <pm>', 'specify package manager to run-script')
-        .parse(process.argv);
-    const { envFile, packageManager } = program;
-    const remainingArgv = getRemainingArgs(program);
-    byNodeEnv({ envFile, packageManager, remainingArgv });
-};
-cli();
-//# sourceMappingURL=cli.js.map
+module.exports = byNodeEnv;
+//# sourceMappingURL=index.cjs.map

@@ -14,7 +14,7 @@ export default [
     ],
     input: 'src/index.ts',
     output: [
-      { file: 'dist/index.js', format: 'cjs', sourcemap: true },
+      { file: 'dist/index.cjs', format: 'cjs', sourcemap: true },
       { file: 'dist/index.mjs', format: 'esm', sourcemap: true },
     ],
     plugins: [typescript({ tsconfig: 'tsconfig.build.json' })],
@@ -33,7 +33,7 @@ export default [
       'which-pm-runs',
     ],
     input: 'src/cli.ts',
-    output: { file: 'dist/cli.js', format: 'cjs', sourcemap: true },
+    output: { file: 'dist/cli.cjs', format: 'cjs', sourcemap: true },
     plugins: [hashbang(), typescript({ tsconfig: 'tsconfig.build.json' })],
   },
 ];

@@ -15,7 +15,7 @@ const getNodeEnv = async ({
   cwd: string;
   env: NodeJS.ProcessEnv;
   envFile?: string;
-}) => {
+}): Promise<string> => {
   if (env.NODE_ENV) {
     return env.NODE_ENV;
   }
@@ -42,7 +42,7 @@ const getPackageManager = async ({
   cwd: string;
   env: NodeJS.ProcessEnv;
   packageManager?: string;
-}) => {
+}): Promise<string> => {
   if (packageManager) {
     return packageManager;
   }
@@ -61,7 +61,9 @@ const getPackageManager = async ({
     const packageJson = readResult.package;
     if (packageJson.engines) {
       const { node, ...engines } = packageJson.engines;
-      const packageManagers = Object.keys(engines).filter((engine) => engine);
+      const packageManagers = Object.keys(engines).filter(
+        (engine): string => engine,
+      );
       if (packageManagers[0]) {
         return packageManagers[0];
       }
@@ -85,7 +87,7 @@ const byNodeEnv = async ({
   packageManager?: string;
   remainingArgv?: string[];
   runScript?: string;
-} = {}) => {
+} = {}): Promise<execa.ExecaReturnValue> => {
   const NODE_ENV = await getNodeEnv({ cwd, env, envFile });
 
   const command = await getPackageManager({ cwd, env, packageManager });
@@ -96,15 +98,17 @@ const byNodeEnv = async ({
     stdio: 'inherit',
   };
 
-  const childProcessResult = await execa(command, args, options).catch(
-    (childProcessResult: execa.ExecaError) => {
+  return execa(command, args, options)
+    .then(
+      (childProcessResult): execa.ExecaReturnValue => {
+        process.exitCode = childProcessResult.exitCode;
+        return childProcessResult;
+      },
+    )
+    .catch((childProcessResult: execa.ExecaError): never => {
       process.exitCode = childProcessResult.exitCode;
       throw childProcessResult;
-    },
-  );
-
-  process.exitCode = childProcessResult.exitCode;
-  return childProcessResult;
+    });
 };
 
 export default byNodeEnv;
